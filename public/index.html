@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL Shortener</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      .container {
+        text-align: center;
+      }
+      .section {
+        margin: 30px 0;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        margin: 10px 0;
+      }
+      button {
+        padding: 8px 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button.delete {
+        background-color: #dc3545;
+      }
+      button:hover {
+        opacity: 0.9;
+      }
+      #shortenResult,
+      #deleteResult {
+        margin-top: 20px;
+        word-break: break-all;
+      }
+      .error {
+        color: red;
+      }
+      .success {
+        color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>URL Shortener</h1>
+
+      <div class="section">
+        <h2>Shorten URL</h2>
+        <form id="shortenForm">
+          <input
+            type="url"
+            id="urlInput"
+            placeholder="Enter URL to shorten (e.g., https://google.com)"
+            required
+          />
+          <button type="submit">Shorten URL</button>
+        </form>
+        <div id="shortenResult"></div>
+      </div>
+
+      <div class="section">
+        <h2>Delete Short URL</h2>
+        <form id="deleteForm">
+          <input
+            type="text"
+            id="shortIdInput"
+            placeholder="Enter the short URL ID (e.g., abc123)"
+            required
+          />
+          <button type="submit" class="delete">Delete URL</button>
+        </form>
+        <div id="deleteResult"></div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("shortenForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const urlInput = document.getElementById("urlInput");
+          const resultDiv = document.getElementById("shortenResult");
+
+          try {
+            const response = await fetch("/shorten", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ url: urlInput.value }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              resultDiv.innerHTML = `
+              <p>Shortened URL:</p>
+              <a href="${data.shortUrl}" target="_blank">${data.shortUrl}</a>
+            `;
+            } else {
+              resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+            }
+          } catch (error) {
+            resultDiv.innerHTML =
+              '<p class="error">An error occurred. Please try again.</p>';
+          }
+        });
+
+      document
+        .getElementById("deleteForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const shortIdInput = document.getElementById("shortIdInput");
+          const resultDiv = document.getElementById("deleteResult");
+
+          try {
+            const shortId = shortIdInput.value.trim();
+            const response = await fetch(`/${shortId}`, {
+              method: "DELETE",
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              resultDiv.innerHTML = `<p class="success">${data.message}</p>`;
+              shortIdInput.value = ""; // Clear input after successful deletion
+            } else {
+              resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+            }
+          } catch (error) {
+            resultDiv.innerHTML =
+              '<p class="error">An error occurred. Please try again.</p>';
+          }
+        });
+    </script>
+  </body>
+</html>
